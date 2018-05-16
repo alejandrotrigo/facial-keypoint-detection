@@ -22,38 +22,47 @@ class Net(nn.Module):
         # 1 input image channel (grayscale), 32 output channels/feature maps, 5x5 square convolution kernel
         # input size = 1 x 224 x 224 output size = 32 x 220 x 220
         # after pooling = 32 x 110 x 110
-        self.conv1 = nn.Conv2d(1, 16, 5)
+        self.conv0_bn = nn.BatchNorm2d(1)
+        self.conv1 = nn.Conv2d(1, 32, 5)
+        nn.init.xavier_uniform_(self.conv1.weight)
         self.pool1 = nn.MaxPool2d(2,2)
-        self.conv1_bn = nn.BatchNorm2d(16)
+        self.conv1_bn = nn.BatchNorm2d(32)
         
         # input_size = 32 x 110 x 110 -> output_size = 64 x 108 x 108
         # after pooling = 64 x 54 x 54
-        self.conv2 = nn.Conv2d(16, 32, 3) 
-        self.conv2_bn = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32, 64, 3) 
+        nn.init.xavier_uniform_(self.conv2.weight)
+        self.conv2_bn = nn.BatchNorm2d(64)
         
         self.drop2d = nn.Dropout2d(p=0.3)
         # input_size = 64 x 54 x 54 -> output_size = 128 x 52 x 52
         # after pooling = 128 x 26 x 26
-        self.conv3 = nn.Conv2d(32, 64, 3)
-        self.conv3_bn = nn.BatchNorm2d(64)
+        self.conv3 = nn.Conv2d(64, 128, 3)
+        nn.init.xavier_uniform_(self.conv3.weight)
+        self.conv3_bn = nn.BatchNorm2d(128)
         
         # input_size = 128 x 26 x 26 -> output_size = 256 x 24 x 24
         # after pooling = 256 x 4 x 4
-        self.conv4 = nn.Conv2d(64, 128, 3)
-        self.conv4_bn = nn.BatchNorm2d(128)
+        self.conv4 = nn.Conv2d(128, 256, 3)
+        nn.init.xavier_uniform_(self.conv4.weight)
+        self.conv4_bn = nn.BatchNorm2d(256)
         self.pool2 = nn.MaxPool2d(6,6)
         
-        self.fc1 = nn.Linear(128 * 4 * 4, 1024)
+        self.fc1 = nn.Linear(256 * 4 * 4, 2048)
+        nn.init.xavier_uniform_(self.fc1.weight)
         self.drop = nn.Dropout(p=0.4)
-        self.fc1_bn = nn.BatchNorm1d(1024)
+        self.fc1_bn = nn.BatchNorm1d(2048)
         
-        self.fc2 = nn.Linear(1024, 512)
-        self.fc2_bn = nn.BatchNorm1d(512)
-        self.fc3 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(2048, 1024)
+        nn.init.xavier_uniform_(self.fc2.weight)
+        self.fc2_bn = nn.BatchNorm1d(1024)
+        self.fc3 = nn.Linear(1024, 256)
+        nn.init.xavier_uniform_(self.fc3.weight)
         self.fc3_bn = nn.BatchNorm1d(256)
-        self.drop2 = nn.Dropout(p=0.4)
+        self.drop2 = nn.Dropout(p=0.2)
         
         self.fc4 = nn.Linear(256, 136)
+        nn.init.xavier_uniform_(self.fc4.weight)
        
         
         ## Note that among the layers to add, consider including:
@@ -65,7 +74,8 @@ class Net(nn.Module):
         ## TODO: Define the feedforward behavior of this model
         ## x is the input image and, as an example, here you may choose to include a pool/conv step:
         ## x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool1(F.relu(self.conv1(x)))
+        x = self.conv0_bn(x)
+        x = self.pool1(F.relu(self.conv1_bn(self.conv1(x))))
         x = self.pool1(F.relu(self.conv2_bn(self.conv2(x))))
         x = self.drop2d(x)
         x = self.pool1(F.relu(self.conv3_bn(self.conv3(x))))

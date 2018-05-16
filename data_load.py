@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.image as mpimg
 import pandas as pd
 import cv2
+import random
 
 class FacialKeypointsDataset(Dataset):
     """Face Landmarks dataset."""
@@ -158,3 +159,80 @@ class ToTensor(object):
         
         return {'image': torch.from_numpy(image),
                 'keypoints': torch.from_numpy(key_pts)}
+    
+class Rotate(object):
+    
+    def rotate_image(self, image, angle):
+        # grab the dimensions of the image and then determine the
+        # center
+        (h, w) = image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+ 
+        # grab the rotation matrix (applying the negative of the
+        # angle to rotate clockwise), then grab the sine and cosine
+        # (i.e., the rotation components of the matrix)
+        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+ 
+        # compute the new bounding dimensions of the image
+        nW = int((h * sin) + (w * cos))
+        nH = int((h * cos) + (w * sin))
+ 
+        # adjust the rotation matrix to take into account translation
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+ 
+        # perform the actual rotation and return the image
+        return cv2.warpAffine(image, M, (nW, nH))
+        
+        
+    def rotate_points(self, points, angle):
+        # grab the dimensions of the image and then determine the
+        # center
+        (h, w) = image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+ 
+        # grab the rotation matrix (applying the negative of the
+        # angle to rotate clockwise), then grab the sine and cosine
+        # (i.e., the rotation components of the matrix)
+        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+ 
+        # compute the new bounding dimensions of the image
+        nW = int((h * sin) + (w * cos))
+        nH = int((h * cos) + (w * sin))
+ 
+        # adjust the rotation matrix to take into account translation
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+        return cv2.warpAffine(points, M, (nW, nH)) 
+    
+    def __call__(self, sample):
+        
+        angle = random.randrange(-10, 10)
+        image, key_pts = sample['image'], sample['keypoints']
+        
+        (h, w) = image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+ 
+        # grab the rotation matrix (applying the negative of the
+        # angle to rotate clockwise), then grab the sine and cosine
+        # (i.e., the rotation components of the matrix)
+        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+ 
+        # compute the new bounding dimensions of the image
+        nW = int((h * sin) + (w * cos))
+        nH = int((h * cos) + (w * sin))
+ 
+        # adjust the rotation matrix to take into account translation
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+ 
+        # perform the actual rotation and return the image
+        return {"image" : cv2.warpAffine(image, M, (nW, nH)), "keypoints": cv2.warpAffine(key_pts, M, (nW, nH)) }
+    
+    
